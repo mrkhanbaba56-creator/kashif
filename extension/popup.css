@@ -18,4 +18,10 @@ input:focus, textarea:focus { border-color:#3e746b; box-shadow:0 0 0 2px rgba(62
 button { width:100%; border:0; border-radius:9px; padding:10px; font-weight:800; cursor:pointer; }
 .secondary { color:var(--green); background:var(--mint); }
 .primary { margin-top:11px; color:var(--green); background:var(--lime); }
+.automation-card { margin-top:11px; padding:11px; border:1px solid var(--line); border-radius:11px; background:#fff; }
+.automation-card > strong { font-size:12px; }
+.automation-card p { margin:4px 0 9px; color:var(--muted); font-size:10px; }
+.automation-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.capture { padding:9px 6px; color:var(--green); background:var(--mint); font-size:10px; }
+.clear { margin-top:7px; padding:5px; color:#9a443a; background:transparent; font-size:9px; }
 .status { min-height:30px; margin:10px 3px 0; color:var(--muted); font-size:10px; text-align:center; }
