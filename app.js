@@ -7,6 +7,7 @@ import {
   parseCSV,
   skuGrossMargin,
 } from "./logic.mjs";
+import { FreeAccountService } from "./auth.js";
 
 const KEYS = {
   profile: "kashu.ecomauto.profile.v1",
@@ -22,7 +23,11 @@ const state = {
   orders: loadJSON(KEYS.orders, null),
   imageItems: [],
   deferredInstallPrompt: null,
+  account: { configured: false, session: null, profile: null, users: [], tasks: [] },
 };
+
+const accountService = new FreeAccountService(handleSessionChange);
+let authMode = "signup";
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -378,6 +383,325 @@ $("#clear-orders").addEventListener("click", () => {
   showToast("Imported order data cleared");
 });
 
+// Free accounts, Admin/Agent/Seller roles and account-handling work
+function openAuthModal(mode = "signup") {
+  setAuthMode(mode);
+  $("#auth-modal").hidden = false;
+  document.body.style.overflow = "hidden";
+  setTimeout(() => $(mode === "signup" ? "#auth-name" : "#auth-email").focus(), 0);
+}
+
+function closeAuthModal() {
+  $("#auth-modal").hidden = true;
+  document.body.style.overflow = "";
+}
+
+function setAuthMode(mode) {
+  authMode = mode;
+  const signup = mode === "signup";
+  $("#signup-tab").classList.toggle("is-active", signup);
+  $("#login-tab").classList.toggle("is-active", !signup);
+  $("#auth-name-wrap").hidden = !signup;
+  $("#auth-name").required = signup;
+  $("#auth-title").textContent = signup ? "Create your free account" : "Welcome back";
+  $("#auth-submit").textContent = signup ? "Create free account" : "Log in";
+  $("#auth-password").autocomplete = signup ? "new-password" : "current-password";
+  $("#auth-status").textContent = accountService.configured
+    ? (signup ? "No card, payment or paid plan is required." : "Use your registered email and password.")
+    : "Owner setup needed: add the free Supabase URL and anon key in config.js.";
+}
+
+$("#open-auth").addEventListener("click", () => {
+  if (state.account.session) navigate("team");
+  else openAuthModal("signup");
+});
+$("#team-auth-button").addEventListener("click", () => {
+  if (state.account.session) navigate("team");
+  else openAuthModal("signup");
+});
+$("#close-auth").addEventListener("click", closeAuthModal);
+$("#auth-modal").addEventListener("click", (event) => { if (event.target === event.currentTarget) closeAuthModal(); });
+$("#signup-tab").addEventListener("click", () => setAuthMode("signup"));
+$("#login-tab").addEventListener("click", () => setAuthMode("login"));
+
+$("#auth-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!accountService.configured) {
+    $("#auth-status").textContent = "Run supabase/schema.sql, then add the two public project values in config.js.";
+    return;
+  }
+  const submit = $("#auth-submit");
+  submit.disabled = true;
+  submit.textContent = authMode === "signup" ? "Creating…" : "Logging in…";
+  try {
+    const credentials = {
+      name: $("#auth-name").value.trim(),
+      email: $("#auth-email").value.trim(),
+      password: $("#auth-password").value,
+    };
+    if (authMode === "signup") {
+      const result = await accountService.signUp(credentials);
+      if (!result.session) {
+        $("#auth-status").textContent = "Account created. Check your email once to confirm, then log in.";
+        setAuthMode("login");
+        return;
+      }
+      showToast("Free seller account created");
+    } else {
+      await accountService.signIn(credentials);
+      showToast("Logged in successfully");
+    }
+    event.target.reset();
+    closeAuthModal();
+    navigate("team");
+  } catch (error) {
+    $("#auth-status").textContent = friendlyAccountError(error);
+  } finally {
+    submit.disabled = false;
+    submit.textContent = authMode === "signup" ? "Create free account" : "Log in";
+  }
+});
+
+$("#sign-out").addEventListener("click", async () => {
+  try {
+    await accountService.signOut();
+    showToast("Signed out");
+  } catch (error) {
+    showToast(friendlyAccountError(error));
+  }
+});
+
+async function handleSessionChange({ session, profile, configured }) {
+  state.account.configured = configured;
+  state.account.session = session;
+  state.account.profile = profile;
+  const connection = $("#team-connection");
+  connection.textContent = configured ? "Free cloud connected" : "Setup required";
+  connection.classList.toggle("is-online", configured);
+  connection.classList.toggle("is-local", !configured);
+
+  const signedIn = Boolean(session && profile);
+  $("#team-guest").hidden = signedIn;
+  $("#team-console").hidden = !signedIn;
+  $("#open-auth").textContent = signedIn ? profile.role.toUpperCase() : "Free sign up";
+  $("#team-auth-button").textContent = signedIn ? "Open your workspace" : (configured ? "Create free account" : "Connect free backend");
+  $("#account-avatar").textContent = signedIn ? initials(profile.full_name || profile.email) : "KM";
+  if (!signedIn) return;
+
+  $("#team-user-name").textContent = profile.full_name || "Seller";
+  $("#team-user-email").textContent = profile.email || session.user.email || "";
+  $("#team-user-role").textContent = titleCase(profile.role);
+  $("#admin-console").hidden = profile.role !== "admin";
+  $("#seller-console").hidden = profile.role !== "seller";
+  $("#task-board-title").textContent = profile.role === "admin" ? "All account work" : profile.role === "agent" ? "Assigned account work" : "Your account work";
+  await refreshTeamData();
+}
+
+async function refreshTeamData() {
+  if (!state.account.session) return;
+  try {
+    state.account.tasks = await accountService.listTasks();
+    if (state.account.profile.role === "admin") state.account.users = await accountService.listUsers();
+    renderTeamUsers();
+    renderTeamTasks();
+  } catch (error) {
+    showToast(friendlyAccountError(error));
+  }
+}
+
+$("#refresh-team").addEventListener("click", refreshTeamData);
+
+function renderTeamUsers() {
+  if (state.account.profile?.role !== "admin") return;
+  const users = state.account.users;
+  const body = $("#team-user-table");
+  body.replaceChildren(...users.map((user) => {
+    const row = document.createElement("tr");
+    const nameCell = document.createElement("td");
+    const name = document.createElement("strong");
+    name.textContent = user.full_name || "Unnamed user";
+    nameCell.append(name);
+    const emailCell = document.createElement("td");
+    emailCell.textContent = user.email;
+    const roleCell = document.createElement("td");
+    const role = document.createElement("span");
+    role.className = `status-badge role-${user.role}`;
+    role.textContent = user.role;
+    roleCell.append(role);
+    const statusCell = document.createElement("td");
+    statusCell.textContent = user.active ? "Active" : "Disabled";
+    const actionCell = document.createElement("td");
+    const select = document.createElement("select");
+    select.className = "role-select";
+    select.dataset.roleUser = user.id;
+    select.disabled = user.id === state.account.profile.id;
+    ["seller", "agent", "admin"].forEach((value) => {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = titleCase(value);
+      option.selected = value === user.role;
+      select.append(option);
+    });
+    actionCell.append(select);
+    row.append(nameCell, emailCell, roleCell, statusCell, actionCell);
+    return row;
+  }));
+
+  fillUserSelect("#assignment-seller", users.filter((user) => user.role === "seller"), "Choose seller");
+  fillUserSelect("#assignment-agent", users.filter((user) => user.role === "agent"), "Choose agent");
+}
+
+function fillUserSelect(selector, users, placeholder) {
+  const select = $(selector);
+  select.replaceChildren();
+  const first = document.createElement("option");
+  first.value = "";
+  first.textContent = placeholder;
+  select.append(first, ...users.map((user) => {
+    const option = document.createElement("option");
+    option.value = user.id;
+    option.textContent = `${user.full_name || "User"} · ${user.email}`;
+    return option;
+  }));
+}
+
+$("#team-user-table").addEventListener("change", async (event) => {
+  const select = event.target.closest("[data-role-user]");
+  if (!select) return;
+  select.disabled = true;
+  try {
+    await accountService.changeRole(select.dataset.roleUser, select.value);
+    showToast(`User changed to ${titleCase(select.value)}`);
+    await refreshTeamData();
+  } catch (error) {
+    showToast(friendlyAccountError(error));
+  } finally {
+    select.disabled = false;
+  }
+});
+
+$("#assignment-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const submit = event.target.querySelector("button[type='submit']");
+  submit.disabled = true;
+  try {
+    await accountService.assignAgent($("#assignment-seller").value, $("#assignment-agent").value);
+    showToast("Seller assigned to agent");
+    event.target.reset();
+    await refreshTeamData();
+  } catch (error) {
+    showToast(friendlyAccountError(error));
+  } finally {
+    submit.disabled = false;
+  }
+});
+
+$("#task-form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const submit = event.target.querySelector("button[type='submit']");
+  submit.disabled = true;
+  try {
+    await accountService.createTask({
+      platform: $("#task-platform").value,
+      title: $("#task-title").value.trim(),
+      details: $("#task-details").value.trim(),
+    });
+    event.target.reset();
+    showToast("Account work request created");
+    await refreshTeamData();
+  } catch (error) {
+    showToast(friendlyAccountError(error));
+  } finally {
+    submit.disabled = false;
+  }
+});
+
+function renderTeamTasks() {
+  const tasks = state.account.tasks || [];
+  $("#team-open-count").textContent = String(tasks.filter((task) => task.status !== "done").length);
+  $("#task-count-badge").textContent = `${tasks.length} task${tasks.length === 1 ? "" : "s"}`;
+  $("#team-task-empty").hidden = tasks.length > 0;
+  const table = $("#team-task-table").closest(".table-wrap");
+  table.hidden = tasks.length === 0;
+  $("#team-task-table").replaceChildren(...tasks.map((task) => {
+    const row = document.createElement("tr");
+    const platform = document.createElement("td");
+    const platformBadge = document.createElement("span");
+    platformBadge.className = "status-badge";
+    platformBadge.textContent = task.platform;
+    platform.append(platformBadge);
+    const work = document.createElement("td");
+    const title = document.createElement("strong");
+    title.textContent = task.title;
+    const details = document.createElement("small");
+    details.textContent = task.details;
+    details.style.display = "block";
+    details.style.color = "var(--muted)";
+    details.style.marginTop = "3px";
+    work.append(title, details);
+    const seller = document.createElement("td");
+    seller.textContent = task.seller?.full_name || task.seller?.email || "—";
+    const agent = document.createElement("td");
+    agent.textContent = task.agent?.full_name || task.agent?.email || "Unassigned";
+    const status = document.createElement("td");
+    const canUpdate = ["admin", "agent"].includes(state.account.profile.role);
+    if (canUpdate) {
+      const select = document.createElement("select");
+      select.className = "task-status-select";
+      select.dataset.taskStatus = task.id;
+      ["open", "in_progress", "waiting", "done"].forEach((value) => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value.replace("_", " ");
+        option.selected = value === task.status;
+        select.append(option);
+      });
+      status.append(select);
+    } else {
+      const badge = document.createElement("span");
+      badge.className = `status-badge ${task.status === "done" ? "" : "return"}`;
+      badge.textContent = task.status.replace("_", " ");
+      status.append(badge);
+    }
+    const updated = document.createElement("td");
+    updated.textContent = new Date(task.updated_at).toLocaleDateString("en-IN");
+    row.append(platform, work, seller, agent, status, updated);
+    return row;
+  }));
+}
+
+$("#team-task-table").addEventListener("change", async (event) => {
+  const select = event.target.closest("[data-task-status]");
+  if (!select) return;
+  select.disabled = true;
+  try {
+    await accountService.updateTaskStatus(select.dataset.taskStatus, select.value);
+    showToast("Task status updated");
+    await refreshTeamData();
+  } catch (error) {
+    showToast(friendlyAccountError(error));
+  } finally {
+    select.disabled = false;
+  }
+});
+
+function initials(value = "") {
+  return value.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase() || "K";
+}
+
+function titleCase(value = "") {
+  return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function friendlyAccountError(error) {
+  const message = String(error?.message || error || "Something went wrong");
+  if (message.includes("Invalid login")) return "Email or password is incorrect.";
+  if (message.includes("already registered")) return "This email already has an account. Use Log in.";
+  if (message.includes("Email not confirmed")) return "Confirm your email once, then log in.";
+  if (message.includes("Failed to fetch")) return "Free backend could not be reached. Check config.js and internet.";
+  return message.length > 120 ? "Account action could not be completed." : message;
+}
+
 // Image studio
 const dropZone = $("#image-drop-zone");
 ["dragenter", "dragover"].forEach((name) => dropZone.addEventListener(name, (event) => {
@@ -695,3 +1019,7 @@ restoreProfit();
 updateSetup();
 const initialPage = location.hash.slice(1);
 if (initialPage && $(`#${initialPage}-page`)) navigate(initialPage);
+accountService.start().catch((error) => {
+  handleSessionChange({ session: null, profile: null, configured: accountService.configured });
+  $("#auth-status").textContent = friendlyAccountError(error);
+});
