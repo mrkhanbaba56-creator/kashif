@@ -1,0 +1,11 @@
+{
+  "name": "kashu.ecomauto Seller Toolkit",
+  "short_name": "ecomauto",
+  "description": "Free seller automation, product tools, agent control and account-handling workspace.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f3eb",
+  "theme_color": "#173f39",
+  "categories": ["business", "productivity"]
+}

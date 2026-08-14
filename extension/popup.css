@@ -1,0 +1,27 @@
+:root { --ink:#172825; --green:#173f39; --lime:#d9ff83; --mint:#e5f6ef; --line:#dde4df; --muted:#6d7c77; }
+* { box-sizing: border-box; }
+body { width: 360px; margin: 0; color: var(--ink); background: #f7f4ed; font: 13px/1.4 Arial, sans-serif; }
+header { display:flex; align-items:center; gap:10px; padding:15px 16px; color:#fff; background:var(--green); }
+.logo { width:36px; height:36px; display:grid; place-items:center; border-radius:11px; color:var(--green); background:var(--lime); font-size:18px; font-weight:800; }
+header strong, header small { display:block; }
+header strong { font-size:14px; }
+header small { color:#b9cec7; font-size:10px; }
+.safe { margin-left:auto; padding:4px 7px; border:1px solid rgba(255,255,255,.2); border-radius:99px; color:var(--lime); font-size:9px; font-weight:800; letter-spacing:.08em; }
+main { padding:14px; }
+.notice { display:grid; gap:2px; margin-bottom:12px; padding:10px; border-radius:10px; color:#31554d; background:var(--mint); font-size:11px; }
+.notice span { color:var(--muted); }
+form { display:grid; gap:9px; }
+label { display:grid; gap:4px; color:#3a4c47; font-size:10px; font-weight:700; }
+.row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+input, textarea { width:100%; border:1px solid var(--line); border-radius:8px; outline:0; padding:8px 9px; background:#fff; font:12px Arial, sans-serif; }
+input:focus, textarea:focus { border-color:#3e746b; box-shadow:0 0 0 2px rgba(62,116,107,.1); }
+button { width:100%; border:0; border-radius:9px; padding:10px; font-weight:800; cursor:pointer; }
+.secondary { color:var(--green); background:var(--mint); }
+.primary { margin-top:11px; color:var(--green); background:var(--lime); }
+.automation-card { margin-top:11px; padding:11px; border:1px solid var(--line); border-radius:11px; background:#fff; }
+.automation-card > strong { font-size:12px; }
+.automation-card p { margin:4px 0 9px; color:var(--muted); font-size:10px; }
+.automation-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.capture { padding:9px 6px; color:var(--green); background:var(--mint); font-size:10px; }
+.clear { margin-top:7px; padding:5px; color:#9a443a; background:transparent; font-size:9px; }
+.status { min-height:30px; margin:10px 3px 0; color:var(--muted); font-size:10px; text-align:center; }
