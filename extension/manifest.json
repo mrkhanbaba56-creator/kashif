@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "kashu.ecomauto Autofill",
-  "version": "1.0.0",
-  "description": "Fill repeat business and listing fields on seller pages you own.",
+  "version": "1.1.0",
+  "description": "Free capture and autofill automation for seller pages you own.",
   "permissions": ["activeTab", "storage"],
   "host_permissions": [
     "https://supplier.meesho.com/*",
