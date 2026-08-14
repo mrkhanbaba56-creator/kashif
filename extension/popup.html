@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>kashu.ecomauto Autofill</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <span class="logo">K</span>
+      <div><strong>kashu.ecomauto</strong><small>Smart Autofill</small></div>
+      <span class="safe">LOCAL</span>
+    </header>
+
+    <main>
+      <div class="notice"><strong>Only empty matching fields are filled.</strong><span>Review everything before you submit.</span></div>
+      <form id="profile-form">
+        <label>Brand name<input id="brand" placeholder="ELV DIRECT" /></label>
+        <label>Legal seller name<input id="seller" placeholder="ISMART TECHNOLOGY" /></label>
+        <div class="row">
+          <label>GSTIN<input id="gstin" maxlength="15" /></label>
+          <label>HSN<input id="hsn" /></label>
+        </div>
+        <div class="row">
+          <label>Weight<input id="weight" placeholder="4.065 kg" /></label>
+          <label>Origin<input id="country" value="India" /></label>
+        </div>
+        <label>Packer / manufacturer<textarea id="packer" rows="2"></textarea></label>
+        <button class="secondary" type="submit">Save profile</button>
+      </form>
+      <button class="primary" id="fill-page" type="button">⚡ Fill current seller page</button>
+      <p class="status" id="status">Works on Meesho Supplier and Flipkart Seller Hub.</p>
+    </main>
+    <script src="popup.js"></script>
+  </body>
+</html>
