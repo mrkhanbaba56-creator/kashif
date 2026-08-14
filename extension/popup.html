@@ -14,7 +14,7 @@
     </header>
 
     <main>
-      <div class="notice"><strong>Only empty matching fields are filled.</strong><span>Review everything before you submit.</span></div>
+      <div class="notice"><strong>Free automation · no licence check.</strong><span>Only empty matching fields are filled. Review before submitting.</span></div>
       <form id="profile-form">
         <label>Brand name<input id="brand" placeholder="ELV DIRECT" /></label>
         <label>Legal seller name<input id="seller" placeholder="ISMART TECHNOLOGY" /></label>
@@ -29,7 +29,16 @@
         <label>Packer / manufacturer<textarea id="packer" rows="2"></textarea></label>
         <button class="secondary" type="submit">Save profile</button>
       </form>
-      <button class="primary" id="fill-page" type="button">⚡ Fill current seller page</button>
+      <button class="primary" id="fill-page" type="button">⚡ Fill business details</button>
+      <section class="automation-card">
+        <strong>Listing capture & reuse</strong>
+        <p>Fill one listing, capture its safe product fields, then reuse them on another supported listing page.</p>
+        <div class="automation-grid">
+          <button class="capture" id="capture-listing" type="button">① Capture listing</button>
+          <button class="capture" id="fill-listing" type="button">② Autofill listing</button>
+        </div>
+        <button class="clear" id="clear-capture" type="button">Clear captured listing</button>
+      </section>
       <p class="status" id="status">Works on Meesho Supplier and Flipkart Seller Hub.</p>
     </main>
     <script src="popup.js"></script>
