@@ -11,6 +11,7 @@
     country: ["country of origin", "origin country", "made in"],
     packer: ["packer", "manufacturer address", "packer details", "manufacturer details"],
   };
+  const blockedTerms = ["password", "passcode", "otp", "token", "cookie", "email", "phone", "mobile", "bank", "account number", "ifsc", "pan number", "aadhaar", "aadhar", "credit card", "debit card", "card number", "cvv"];
 
   function visible(element) {
     const style = getComputedStyle(element);
@@ -28,6 +29,20 @@
       explicitLabel,
       wrappingLabel,
     ].filter(Boolean).join(" ").toLowerCase().replace(/[^a-z0-9]+/g, " ");
+  }
+
+  function normalizedKey(element) {
+    return descriptor(element).replace(/\b(required|optional|enter|select|choose)\b/g, " ").replace(/\s+/g, " ").trim().slice(0, 180);
+  }
+
+  function safeField(element) {
+    const type = (element.getAttribute("type") || "text").toLowerCase();
+    const text = descriptor(element);
+    return visible(element)
+      && !element.disabled
+      && !element.readOnly
+      && !["hidden", "password", "file", "checkbox", "radio", "submit", "email", "tel"].includes(type)
+      && !blockedTerms.some((term) => text.includes(term));
   }
 
   function matchingKey(element) {
@@ -52,12 +67,46 @@
     return true;
   }
 
+  function pageFields() {
+    return [...document.querySelectorAll("input, textarea, select")].filter(safeField);
+  }
+
+  function capturedValueFor(element, captured) {
+    const key = normalizedKey(element);
+    if (!key) return null;
+    const exact = captured.find((field) => field.key === key);
+    if (exact) return exact.value;
+    const candidates = captured.filter((field) => field.key.length > 4 && (key.includes(field.key) || field.key.includes(key)));
+    return candidates.sort((a, b) => Math.abs(a.key.length - key.length) - Math.abs(b.key.length - key.length))[0]?.value ?? null;
+  }
+
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    const fields = pageFields();
+    if (message.type === "KASHU_CAPTURE_LISTING") {
+      const captured = fields
+        .map((field) => ({
+          key: normalizedKey(field),
+          value: String(field.value || "").trim().slice(0, 3000),
+          tag: field.tagName.toLowerCase(),
+        }))
+        .filter((field) => field.key && field.value)
+        .slice(0, 120);
+      sendResponse({ fields: captured });
+      return true;
+    }
+
+    if (message.type === "KASHU_FILL_CAPTURED") {
+      let count = 0;
+      fields.forEach((field) => {
+        if (String(field.value || "").trim()) return;
+        const value = capturedValueFor(field, Array.isArray(message.fields) ? message.fields : []);
+        if (value && setNativeValue(field, value)) count += 1;
+      });
+      sendResponse({ count });
+      return true;
+    }
+
     if (message.type !== "KASHU_FILL") return false;
-    const fields = [...document.querySelectorAll("input, textarea, select")].filter((element) => {
-      const type = (element.getAttribute("type") || "text").toLowerCase();
-      return visible(element) && !element.disabled && !element.readOnly && !["hidden", "password", "file", "checkbox", "radio", "submit"].includes(type);
-    });
     let count = 0;
     fields.forEach((field) => {
       if (String(field.value || "").trim()) return;
