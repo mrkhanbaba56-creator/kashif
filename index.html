@@ -25,7 +25,7 @@
           <span class="brand-mark">K</span>
           <span>
             <strong>kashu.ecomauto</strong>
-            <small>Seller workspace</small>
+            <small>Free seller workspace</small>
           </span>
         </a>
 
@@ -48,6 +48,9 @@
           <button class="nav-item" type="button" data-page="orders">
             <span aria-hidden="true">↗</span> Order Analytics
           </button>
+          <button class="nav-item" type="button" data-page="team">
+            <span aria-hidden="true">♙</span> Team & Agents
+          </button>
           <button class="nav-item" type="button" data-page="autofill">
             <span aria-hidden="true">⚡</span> Smart Autofill
           </button>
@@ -56,8 +59,8 @@
         <div class="privacy-note">
           <span class="status-dot"></span>
           <div>
-            <strong>Local-first</strong>
-            <p>Your business data stays in this browser.</p>
+            <strong>100% free tools</strong>
+            <p>No paid plan or licence lock.</p>
           </div>
         </div>
       </aside>
@@ -71,16 +74,17 @@
           </div>
           <div class="topbar-actions">
             <button class="button button-ghost" id="install-app" type="button" hidden>Install app</button>
-            <button class="avatar" type="button" data-page="autofill" aria-label="Open business profile">KM</button>
+            <button class="button button-auth" id="open-auth" type="button">Free sign up</button>
+            <button class="avatar" id="account-avatar" type="button" data-page="team" aria-label="Open account and team">KM</button>
           </div>
         </header>
 
         <section class="page is-active" id="dashboard-page" data-title="Good morning, Kashu" data-kicker="Seller overview">
           <div class="hero-card">
             <div class="hero-copy">
-              <span class="pill pill-light">All-in-one e-commerce toolkit</span>
+              <span class="pill pill-light">Free forever · no paid plan</span>
               <h2>Less copy-paste.<br /><span>More selling.</span></h2>
-              <p>Create marketplace copy, check true margins, prepare product images and keep your SKUs organized from one private workspace.</p>
+              <p>Create marketplace copy, automate repeat seller-panel fields, check true margins, prepare product images and manage agents from one workspace.</p>
               <div class="button-row">
                 <button class="button button-primary" type="button" data-page="listing">Create a listing →</button>
                 <button class="button button-soft" type="button" data-page="profit">Check profit</button>
@@ -129,6 +133,11 @@
             <button class="tool-card" type="button" data-page="orders">
               <span class="tool-icon icon-coral">↗</span>
               <span><strong>Order Analytics</strong><small>Upload CSV and see real performance</small></span>
+              <b>→</b>
+            </button>
+            <button class="tool-card" type="button" data-page="team">
+              <span class="tool-icon icon-purple">♙</span>
+              <span><strong>Team & Agents</strong><small>Assign sellers and track account work</small></span>
               <b>→</b>
             </button>
           </div>
@@ -420,6 +429,89 @@
           </article>
         </section>
 
+        <section class="page" id="team-page" data-title="Team & Agent Control" data-kicker="Free account handling workspace">
+          <div class="team-hero panel">
+            <div>
+              <span class="pill">Free forever</span>
+              <h2>You control every seller and agent.</h2>
+              <p>Sellers can raise account-work requests, agents can complete assigned work, and the admin can control roles and assignments from one place.</p>
+            </div>
+            <div class="team-hero-actions">
+              <span id="team-connection" class="connection-chip is-local">Local tools active</span>
+              <button class="button button-primary" id="team-auth-button" type="button">Create free account</button>
+            </div>
+          </div>
+
+          <article class="panel team-guest" id="team-guest">
+            <div class="empty-orbit">♙</div>
+            <div>
+              <p class="eyebrow">Free signup</p>
+              <h2>One workspace for Admin, Agent and Seller</h2>
+              <p>Create your free account to sync team assignments and account-handling work. The seller tools remain free even without signing in.</p>
+              <div class="role-preview">
+                <span><b>Admin</b> Controls users, agents and assignments</span>
+                <span><b>Agent</b> Handles assigned seller work</span>
+                <span><b>Seller</b> Creates and tracks requests</span>
+              </div>
+            </div>
+          </article>
+
+          <div id="team-console" hidden>
+            <div class="team-summary">
+              <article><span>Signed in as</span><strong id="team-user-name">—</strong><small id="team-user-email">—</small></article>
+              <article><span>Your role</span><strong id="team-user-role">Seller</strong><small>Controlled by admin</small></article>
+              <article><span>Open work</span><strong id="team-open-count">0</strong><small>Assigned or created</small></article>
+              <article class="team-signout-card"><button class="button button-ghost" id="sign-out" type="button">Sign out</button></article>
+            </div>
+
+            <section class="panel admin-console" id="admin-console" hidden>
+              <div class="panel-header wrap">
+                <div><p class="eyebrow">Owner controls</p><h2>Users and agent roles</h2></div>
+                <button class="button button-soft" id="refresh-team" type="button">Refresh team</button>
+              </div>
+              <p class="section-note">A person signs up free as a Seller. You can promote that registered user to Agent from here.</p>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Change role</th></tr></thead>
+                  <tbody id="team-user-table"></tbody>
+                </table>
+              </div>
+              <form class="assignment-form" id="assignment-form">
+                <div><p class="eyebrow">Account assignment</p><h3>Assign seller to agent</h3></div>
+                <label>Seller<select id="assignment-seller" required><option value="">Choose seller</option></select></label>
+                <label>Agent<select id="assignment-agent" required><option value="">Choose agent</option></select></label>
+                <button class="button button-primary" type="submit">Assign agent</button>
+              </form>
+            </section>
+
+            <section class="panel seller-console" id="seller-console" hidden>
+              <div class="panel-header"><div><p class="eyebrow">Account handling</p><h2>Create work request</h2></div><span class="pill">Free</span></div>
+              <form class="task-form" id="task-form">
+                <label>Marketplace
+                  <select id="task-platform"><option>Meesho</option><option>Flipkart</option><option>Amazon</option><option>JioMart</option><option>Snapdeal</option><option>Other</option></select>
+                </label>
+                <label>Work title<input id="task-title" required placeholder="e.g. Fix rejected trolley table listing" /></label>
+                <label>Instructions<textarea id="task-details" required rows="3" placeholder="Explain what the agent needs to do. Never enter passwords or OTPs."></textarea></label>
+                <button class="button button-primary" type="submit">Create free request</button>
+              </form>
+            </section>
+
+            <section class="panel task-board">
+              <div class="panel-header wrap">
+                <div><p class="eyebrow">Live work board</p><h2 id="task-board-title">Your account work</h2></div>
+                <span class="pill" id="task-count-badge">0 tasks</span>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Platform</th><th>Work</th><th>Seller</th><th>Agent</th><th>Status</th><th>Updated</th></tr></thead>
+                  <tbody id="team-task-table"></tbody>
+                </table>
+              </div>
+              <div class="empty-table" id="team-task-empty"><strong>No work requests yet</strong><span>New tasks will appear here.</span></div>
+            </section>
+          </div>
+        </section>
+
         <section class="page" id="autofill-page" data-title="Smart Autofill Profile" data-kicker="Save repeat business details">
           <div class="workspace-grid">
             <form class="panel form-panel" id="profile-form">
@@ -433,7 +525,7 @@
             <article class="panel extension-card">
               <span class="pill pill-light">Chrome extension included</span>
               <h2>Fill repeat fields inside seller panels.</h2>
-              <p>The included extension uses your saved profile to fill matching fields on Meesho Supplier and Flipkart Seller Hub pages that you open yourself.</p>
+              <p>The included free extension captures safe listing fields and reuses them across Meesho Supplier and Flipkart Seller Hub pages that you open yourself.</p>
               <ol>
                 <li>Download this GitHub project.</li>
                 <li>Open <code>chrome://extensions</code> and turn on Developer mode.</li>
@@ -449,6 +541,28 @@
           </div>
         </section>
       </main>
+    </div>
+
+    <div class="modal-backdrop" id="auth-modal" hidden>
+      <section class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title">
+        <button class="modal-close" id="close-auth" type="button" aria-label="Close">×</button>
+        <span class="brand-mark">K</span>
+        <p class="eyebrow">No payment · no trial</p>
+        <h2 id="auth-title">Create your free account</h2>
+        <p class="auth-intro">Seller signup is free forever. Admin can later change a registered user into an Agent.</p>
+        <div class="auth-tabs" role="tablist">
+          <button class="is-active" id="signup-tab" type="button">Free signup</button>
+          <button id="login-tab" type="button">Log in</button>
+        </div>
+        <form id="auth-form">
+          <label id="auth-name-wrap">Full name<input id="auth-name" autocomplete="name" placeholder="Your name" /></label>
+          <label>Email<input id="auth-email" type="email" autocomplete="email" required placeholder="name@example.com" /></label>
+          <label>Password<input id="auth-password" type="password" minlength="6" autocomplete="new-password" required placeholder="Minimum 6 characters" /></label>
+          <button class="button button-primary full-width" id="auth-submit" type="submit">Create free account</button>
+        </form>
+        <p class="auth-status" id="auth-status">Signup requires the free backend setup included in this project.</p>
+        <p class="auth-legal">By signing up, you agree to use automation only on marketplace accounts you own or are authorized to manage.</p>
+      </section>
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
