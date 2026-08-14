@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "kashu.ecomauto Autofill",
+  "version": "1.0.0",
+  "description": "Fill repeat business and listing fields on seller pages you own.",
+  "permissions": ["activeTab", "storage"],
+  "host_permissions": [
+    "https://supplier.meesho.com/*",
+    "https://seller.flipkart.com/*"
+  ],
+  "action": {
+    "default_title": "kashu.ecomauto Autofill",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://supplier.meesho.com/*",
+        "https://seller.flipkart.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
