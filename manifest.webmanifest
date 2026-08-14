@@ -1,7 +1,7 @@
 {
   "name": "kashu.ecomauto Seller Toolkit",
   "short_name": "ecomauto",
-  "description": "Local-first workspace for product listings, profit, images, SKUs and order analytics.",
+  "description": "Free seller automation, product tools, agent control and account-handling workspace.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
