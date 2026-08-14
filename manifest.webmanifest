@@ -1,0 +1,11 @@
+{
+  "name": "kashu.ecomauto Seller Toolkit",
+  "short_name": "ecomauto",
+  "description": "Local-first workspace for product listings, profit, images, SKUs and order analytics.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f3eb",
+  "theme_color": "#173f39",
+  "categories": ["business", "productivity"]
+}
