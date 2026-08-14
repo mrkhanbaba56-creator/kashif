@@ -1,5 +1,5 @@
 const CACHE = "kashu-ecomauto-v1";
-const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./logic.mjs", "./manifest.webmanifest"];
+const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./logic.mjs", "./auth.js", "./config.js", "./manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)));
